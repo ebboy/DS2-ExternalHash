@@ -22,14 +22,18 @@ int hashFunction(int clientKey, int hashSize){
     return clientKey % hashSize;
 }
 
-int checkPosition(FILE * fileName, int filePos){
-    fseek(fileName, filePos * sizeof(int), SEEK_SET);
+int checkPosition(FILE * fileName, int hashPos){
+    fseek(fileName, hashPos * sizeof(int), SEEK_SET);
     int readItem;
     fread(&readItem, sizeof(int), 1, fileName);
-    
+
     return readItem;
 }
 
+void insertPointer(FILE *hashFile, int pointer, int bucket){
+    fseek(hashFile, bucket, SEEK_SET);
+    fwrite(&pointer, sizeof(int), 1, fileName);
+}
 
 void print(Client * cc);
 
