@@ -5,12 +5,16 @@
 #include <stdio.h>
 #include "compartimento_hash.h"
 
+#define HASH_SIZE 7
+
+
 typedef struct Client {
     int clientCode;
     char name[100];
     int status; // 1 used, 0 free
     int pointer;
 } Client;
+
 
 int clientSize() {
     return sizeof(int)  // clientCode
@@ -28,7 +32,7 @@ int readClient(Client * cli, FILE *fileName){
 }
 
 void writeClient(Client *cli, FILE *fileName, int filePos, int size){
-    fseek(fileName, filePos * size, SEEK_SET) // shouldnt be SEEK_CUR?
+    fseek(fileName, filePos * size, SEEK_SET);
     fwrite(&cli->clientCode, sizeof(int), 1, fileName);
     fwrite(cli->name, sizeof(char), sizeof(cli->name), fileName);
     fwrite(&cli->status, sizeof(int), 1, fileName);
@@ -38,16 +42,21 @@ void writeClient(Client *cli, FILE *fileName, int filePos, int size){
 // If controlVar = 2  key not found, filePos is the last client of the chain
 void findClient(int clientKey, FILE *fileName, int *filePos, int *controlVar){
     Client * client = (Client*) malloc(sizeof(Client));
-
+    printf("hahahahah\n" );
     *controlVar = 0;
-
+    printf("parei no control var\n" );
     int j = -1; // J is the first free position of the client chain
 
-    while (controlVar == 0) {
+    while (*controlVar == 0) {
+        printf("fseek deu pau\n" );
         fseek(fileName, *filePos * clientSize() , SEEK_SET);
+        printf("fseek\n" );
         readClient(client, fileName);
+        printf("readcliente\n");
+        printf("%d\n",client->clientCode );
+        printf("%s\n",client->name );
         if(client->status != 1 ){
-            printf("Error: Inactive client is still in the list\n", );
+            printf("Error: Inactive client is still in the list\n" );
             exit(1);
         }
         if(client->clientCode == clientKey){
@@ -58,7 +67,7 @@ void findClient(int clientKey, FILE *fileName, int *filePos, int *controlVar){
             *filePos = client->pointer;
 
         }
-        else if(cliente->pointer == -1){
+        else if(client->pointer == -1){
             *controlVar = 2;
         }
 
@@ -66,7 +75,7 @@ void findClient(int clientKey, FILE *fileName, int *filePos, int *controlVar){
 }
 /*This function searches for the first free line.
   The free line can be an unused line or an used line with a free status flag. */
-int findFreeLine(FILE *fileName, int stcructure_size){
+int findFreeLine(FILE *fileName, int structure_size){
     Client * client = (Client*) malloc(sizeof(Client));
     rewind(fileName);
     int fileIterator = 0;
@@ -90,47 +99,33 @@ int findFreeLine(FILE *fileName, int stcructure_size){
     return fileIterator;
 
 }
-// This function searches a certain client inside a client chain
-Cliente* listedClientSearch(int key, int filePos, FILE * fileName){
-    Client * client = (Client*) malloc(sizeof(Client));
-    fseek(fileName, filePos * clientSize(), SEEK_SET);
-    while(readClient(client, fileName)){
-        if(client->clientCode == key){
-            return client;
-        }
-        else{
-            if(client->pointer != -1){
-                fseek(fileName, filePos * clientSize(), SEEK_SET);
-            }
-            else{
-                return
-            }
-        }
-    }
-}
+
 
 void insertClient(Client *client, FILE *fileName, FILE *hashFile){
-    int hash = hashFunction(client->clientCode, HASH_SIZE);
-    int filePos = checkPosition(hashFile, hash);
+    rewind(fileName);
+    int hash;
+    hash = hashFunction(client->clientCode, HASH_SIZE);
+    int filePos;
+    filePos = checkPosition(hashFile, hash);
     int insertControl = 0;
     int *controlVar = 0;
     Client * previousClient = (Client*) malloc(sizeof(Client));
     int previousClientPos;
 
-    while()
     // CheckPosition returns -1 when hash position is free.
     // We must find a free position in the client.dat file in order to add another client.
     // if filePos == -1, it means that the client isnt in the hash tabler neither in the client.dat
     if(filePos == -1){
+        printf("teste\n" );
         filePos = findFreeLine(fileName, clientSize()) / clientSize();
-        writeClient(client, fileName, filePos);
-        insertPointer(hashFile, filePos, hash * clientSize());
+        printf("%d\n", filePos);
+        writeClient(client, fileName, filePos, clientSize());
+        insertPointer(hashFile, filePos, hash *sizeof(int));
     }
     else{
         findClient(client->clientCode, fileName, &filePos, controlVar);
         if(*controlVar == 1){
             printf("Dumb user!. Client already inserted\n" );
-            break;
         }
         else{
             previousClientPos = filePos;
@@ -140,7 +135,7 @@ void insertClient(Client *client, FILE *fileName, FILE *hashFile){
             fwrite(&filePos, sizeof(int), 1, fileName);
             //Writing new client
             fseek(fileName, filePos * clientSize(), SEEK_SET);
-            writeClient(client, fileName, filePos);
+            writeClient(client, fileName, filePos, clientSize());
         }
     }
 }

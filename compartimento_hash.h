@@ -7,15 +7,15 @@
 #define HASH_SIZE 7
 
 // Imprime funcionario
-void createHash(int size, FILE *fileName){
-    FILE* fileName;
-    fileName=fopen("tabHash.h", "w+b");
-    rewind(fileName);
+void createHash(int size, char *fileName){
+    FILE* hashfile;
+    hashfile=fopen(fileName, "w+b");
+    rewind(hashfile);
     int a=-1;
     for(int i=0; i<size;i++){
-        fwrite(&a, sizeof(int), 1, fileName);
+        fwrite(&a, sizeof(int), 1, hashfile);
     }
-    fclose(fileName);
+    fclose(hashfile);
 }
 
 int hashFunction(int clientKey, int hashSize){
@@ -32,22 +32,10 @@ int checkPosition(FILE * fileName, int hashPos){
 
 void insertPointer(FILE *hashFile, int pointer, int bucket){
     fseek(hashFile, bucket, SEEK_SET);
-    fwrite(&pointer, sizeof(int), 1, fileName);
+    fwrite(&pointer, sizeof(int), 1, hashFile);
+    printf("inseri %d\n",pointer );
 }
 
-void print(Client * cc);
 
-// Cria funcionario. Lembrar de usar free(funcionario)
-Client *client(int clientCode, char *name);
-
-// Salva funcionario no arquivo out, na posicao atual do cursor
-void save(Client *cli, FILE *out);
-
-// Le um funcionario do arquivo in na posicao atual do cursor
-// Retorna um ponteiro para funcionario lido do arquivo
-Client *read(FILE *in);
-
-// Retorna tamanho do funcionario em bytes
-int size();
 
 #endif
