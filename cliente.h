@@ -52,7 +52,7 @@ void writeClient(Client *cli, FILE *fileName, int filePos, int size){
 }
 // If controlVar = 1 "key found", filePos = Real file Address
 // If controlVar = 2  key not found, filePos is the last client of the chain
-void findClient(int clientKey, FILE *fileName, int *filePos, int *controlVar){
+void findClient(int clientKey, FILE *fileName, int *filePos, int *previousFilePos, int *controlVar){
     Client * client = (Client*) malloc(sizeof(Client));
     *controlVar = 0;
     int j = -1; // J is the first free position of the client chain
@@ -70,8 +70,8 @@ void findClient(int clientKey, FILE *fileName, int *filePos, int *controlVar){
             break;
         }
         else if(client->clientCode != clientKey && client->pointer != -1){
+            *previousFilePos = *filePos;
             *filePos = client->pointer;
-
         }
         else if(client->pointer == -1){
             *controlVar = 2;
@@ -112,6 +112,7 @@ void insertClient(Client *client, FILE *fileName, FILE *hashFile){
     int hash;
     hash = hashFunction(client->clientCode, HASH_SIZE);
     int filePos;
+    int previousFilePos;
     filePos = checkPosition(hashFile, hash);
     int insertControl = 0;
     int *controlVar = (int *) malloc(sizeof(int));
@@ -130,7 +131,7 @@ void insertClient(Client *client, FILE *fileName, FILE *hashFile){
         insertPointer(hashFile, filePos, hash *sizeof(int));
     }
     else{
-        findClient(client->clientCode, fileName, &filePos, controlVar);
+        findClient(client->clientCode, fileName, &filePos, &previousClientPos, controlVar);
         if(*controlVar == 1){
             printf("Dumb user! Client already inserted\n" );
         }
@@ -152,6 +153,7 @@ void updateClient(int key, char nome[100], FILE *fileName, FILE *hashFile){
     int hash;
     hash = hashFunction(key, HASH_SIZE);
     int filePos;
+    int previousFilePos;
     filePos = checkPosition(hashFile, hash);
     int insertControl = 0;
     int *controlVar = (int *) malloc(sizeof(int));
@@ -160,7 +162,7 @@ void updateClient(int key, char nome[100], FILE *fileName, FILE *hashFile){
         printf("ERROR: Dumb user! This client does not exist!\n");
     }
     else{
-        findClient(key, fileName , &filePos, controlVar);
+        findClient(key, fileName , &filePos, &previousFilePos, controlVar);
         if(*controlVar == 2){
             printf("ERROR: Dumb user! This client does not exist!\n");
         }
@@ -172,6 +174,61 @@ void updateClient(int key, char nome[100], FILE *fileName, FILE *hashFile){
 
 }
 
+void removeClient(int key, FILE *fileName, FILE *hashFile){
+    int hash;
+    hash = hashFunction(key, HASH_SIZE);
+    int filePos;
+    filePos = checkPosition(hashFile, hash);
+    int previousFilePos;
+    int clientPosition;
+    clientPosition = checkPosition(hashFile, hash);
+    int *controlVar = (int *) malloc(sizeof(int));
+    Client * clientRemoved = (Client*) malloc(sizeof(Client));
+    if(filePos == -1){
+        printf("ERROR: Dumb user! This client does not exist!\n");
+    }
+    else{
+        findClient(key, fileName , &filePos, &previousFilePos, controlVar);
+        if(*controlVar == 2){
+            printf("ERROR: Dumb user! This client does not exist and cannot be removed!!\n");
+        }
+        else{
+            fseek(fileName, filePos * clientSize(), SEEK_SET);
+            readClient(clientRemoved, fileName);
+            clientRemoved->status = 0;
+            // In this case, client is pointed on the hash and is being removed
+            if(clientRemoved->pointer == -1 && clientPosition == filePos){
+                fseek(fileName, filePos * clientSize() + sizeof(int) + (sizeof(char) * 100), SEEK_SET);
+                fwrite(&clientRemoved->status, sizeof(int), 1, fileName);
+                int a = -1;
+                fseek(hashFile, hash * sizeof(int), SEEK_SET);
+                fwrite(&a, sizeof(int), 1, hashFile);
+            }
+            // in this case, client points to another one and he's in the hash.
+            else if(clientRemoved->pointer != -1 && clientPosition == filePos){
+                fseek(fileName, filePos * clientSize() + sizeof(int) + sizeof(char) * 100, SEEK_SET );
+                fwrite(&clientRemoved->status, sizeof(int), 1, fileName);
+                fseek(hashFile, hash * sizeof(int), SEEK_SET);
+                fwrite(&clientRemoved->pointer, sizeof(int), 1, hashFile);
+            }
+            // Client in the middle of the list
+            else if(clientRemoved->pointer != -1 && clientPosition != filePos){
+                fseek(fileName, previousFilePos * clientSize() + clientSize() - sizeof(int), SEEK_SET);
+                fwrite(&clientRemoved->pointer, sizeof(int), 1, fileName);
+                fseek(fileName, filePos * clientSize() + sizeof(int) + sizeof(char) * 100, SEEK_SET);
+                fwrite(&clientRemoved->status, sizeof(int),1, fileName);
+            }
+            //Client at the end of the list
+            else if(clientRemoved->pointer == -1 && clientPosition != filePos){
+                fseek(fileName, filePos * clientSize() + sizeof(int) + sizeof(char) * 100, SEEK_SET );
+                fwrite(&clientRemoved->status, sizeof(int),1, fileName);
+            }
+
+        }
+    }
+
+
+}
 
 
 // Imprime funcionario

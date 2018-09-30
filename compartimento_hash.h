@@ -35,6 +35,15 @@ void insertPointer(FILE *hashFile, int pointer, int bucket){
     fwrite(&pointer, sizeof(int), 1, hashFile);
 }
 
+void printHash(FILE * hashFile){
+    int pointer, i = 0;
+    rewind(hashFile);
+    while(fread(&pointer, sizeof(int), 1, hashFile) > 0){
+        printf("\n-----------------\n");
+        printf("Bucket %d: pointer: %d\n",i, pointer);
+        i++;
+    }
+}
 
 
 #endif
