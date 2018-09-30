@@ -33,7 +33,6 @@ int checkPosition(FILE * fileName, int hashPos){
 void insertPointer(FILE *hashFile, int pointer, int bucket){
     fseek(hashFile, bucket, SEEK_SET);
     fwrite(&pointer, sizeof(int), 1, hashFile);
-    printf("inseri %d\n",pointer );
 }
 
 
