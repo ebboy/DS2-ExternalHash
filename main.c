@@ -38,6 +38,9 @@ int main(int argc, char const *argv[]) {
     insertClient(teste2, clienteFile, hash);
     insertClient(teste3, clienteFile, hash);
     insertClient(teste4, clienteFile, hash);
+    strcpy(teste4->name,"joaoalbino4COLISAOATUALIZADO");
+
+    updateClient(12, "teste", clienteFile, hash);
 
     rewind(clienteFile);
 

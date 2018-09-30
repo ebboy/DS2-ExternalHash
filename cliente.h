@@ -132,7 +132,7 @@ void insertClient(Client *client, FILE *fileName, FILE *hashFile){
     else{
         findClient(client->clientCode, fileName, &filePos, controlVar);
         if(*controlVar == 1){
-            printf("Dumb user!. Client already inserted\n" );
+            printf("Dumb user! Client already inserted\n" );
         }
         else{
             previousClientPos = filePos;
@@ -146,8 +146,31 @@ void insertClient(Client *client, FILE *fileName, FILE *hashFile){
         }
     }
 }
+// Finds an user and update it's name. (Name is the only secure value that might be changed)
+//As the key is a sequence, it doesn't make sense to change it. Changing it might cause inconsistency with the hash table
+void updateClient(int key, char nome[100], FILE *fileName, FILE *hashFile){
+    int hash;
+    hash = hashFunction(key, HASH_SIZE);
+    int filePos;
+    filePos = checkPosition(hashFile, hash);
+    int insertControl = 0;
+    int *controlVar = (int *) malloc(sizeof(int));
 
+    if(filePos == -1){
+        printf("ERROR: Dumb user! This client does not exist!\n");
+    }
+    else{
+        findClient(key, fileName , &filePos, controlVar);
+        if(*controlVar == 2){
+            printf("ERROR: Dumb user! This client does not exist!\n");
+        }
+        else{
+            fseek(fileName, (filePos * clientSize()) + sizeof(int), SEEK_SET);
+            fwrite(nome, sizeof(char), sizeof(nome), fileName);
+        }
+    }
 
+}
 
 
 
